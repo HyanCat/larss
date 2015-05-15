@@ -1,6 +1,6 @@
 <?php
 
-namespace HyanCat\Larss;
+namespace Hyancat\Larss;
 
 
 class XMLElement extends \SimpleXMLElement

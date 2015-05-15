@@ -1,6 +1,6 @@
 <?php
 
-namespace HyanCat\Larss;
+namespace Hyancat\Larss;
 
 
 use Illuminate\Support\Facades\Facade;

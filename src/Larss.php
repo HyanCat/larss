@@ -5,122 +5,94 @@ namespace Hyancat\Larss;
 
 class Larss
 {
-	protected $version = '';
-	protected $encoding = '';
+	protected $rssVersion = '2.0';
+	protected $encoding = 'UTF-8';
+
 	protected $channel = [];
 	protected $items = [];
 	protected $limit = 0;
 
-	public function feed($version, $encoding)
+	/**
+	 * Make a new Larss objetc.
+	 * @param string $rssVersion
+	 * @param string $encoding
+	 * @return $this
+	 * @internal param $version
+	 */
+	public function make($rssVersion = '2.0', $encoding = 'UTF-8')
 	{
-		$this->version  = $version;
-		$this->encoding = $encoding;
+		$this->rssVersion = $rssVersion;
+		$this->encoding   = $encoding;
 
 		return $this;
 	}
 
 	/**
-	 * @param $parameters
-	 * - title (required)
-	 * - link (required)
-	 * - description (required)
-	 * - language
-	 * - copyright
-	 * - managingEditor
-	 * - webMaster
-	 * - pubDate
-	 * - lastBuildDate
-	 * - category
-	 * - generator
-	 * - docs
-	 * - cloud
-	 * - ttl
-	 * - image
-	 * - rating
-	 * - textInput
-	 * - skipHours
-	 * - skipDays
+	 * @param $properties
+	 *        --required: [title] & [link] & [description]
+	 *        --optional: [language | copyright | managingEditor | webMaster | pubDate | lastBuildDate | category | generator | docs | cloud | ttl | image | rating | textInput | skipHours | skipDays]
 	 * @return $this
 	 * @throws \Exception
 	 */
-	public function channel($parameters)
+	public function channel($properties)
 	{
-		if (! array_key_exists('title', $parameters) || ! array_key_exists('description', $parameters) || ! array_key_exists('link', $parameters)) {
-			throw new \Exception('Parameter required missing : title, description or link');
+		if (! array_key_exists('title', $properties) || ! array_key_exists('description', $properties) || ! array_key_exists('link', $properties)) {
+			throw new \Exception('Properties required missing : title, description or link!');
 		}
-		$this->channel = $parameters;
+		$this->channel = $properties;
 
 		return $this;
 	}
 
 	/**
-	 * @param $parameters
-	 * - title
-	 * - link
-	 * - description
-	 * - author
-	 * - category
-	 * - comments
-	 * - enclosure
-	 * - guid
-	 * - pubDate
-	 * - source
+	 * @param $properties
+	 *        --optional: [title | link | description | author | category | comments | enclosure | guid | pubDate | source]
 	 * @return $this
 	 * @throws \Exception
 	 */
-	public function item($parameters)
+	public function item($properties)
 	{
-		if (empty($parameters)) {
-			throw new \Exception('Parameter missing');
+		if (empty($properties)) {
+			throw new \Exception('Properties missing!');
 		}
-		$this->items[] = $parameters;
+		$this->items[] = $properties;
 
 		return $this;
 	}
 
+	/**
+	 * Limit the count of the output.
+	 * @param $limit
+	 * @return $this
+	 */
 	public function limit($limit)
 	{
-		if (is_int($limit) and $limit > 0) {
-			$this->limit = $limit;
-		}
+		$this->limit = is_int($limit) && $limit > 0 ? $limit : 0;
 
 		return $this;
 	}
 
+	/**
+	 * render for page.
+	 * @return $this
+	 * @throws \Exception
+	 */
 	public function render()
 	{
-		$xml = new XMLElement('<?xml version="1.0" encoding="' . $this->encoding . '"?><rss version="' . $this->version . '" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:sy="http://purl.org/rss/1.0/modules/syndication/" xmlns:slash="http://purl.org/rss/1.0/modules/slash/"></rss>', LIBXML_NOERROR | LIBXML_ERR_NONE | LIBXML_ERR_FATAL);
-		$xml->addChild('channel');
-		foreach ($this->channel as $kC => $vC) {
-			$xml->channel->addChild($kC, $vC);
-		}
 		$items = $this->limit > 0 ? array_slice($this->items, 0, $this->limit) : $this->items;
-		foreach ($items as $item) {
-			$elem_item = $xml->channel->addChild('item');
-			foreach ($item as $kI => $vI) {
-				$options = explode('|', $kI);
-				if (in_array('cdata', $options)) {
-					$elem_item->addCdataChild($options[0], $vI);
-				}
-				elseif (strpos($options[0], ':') !== false) {
-					$elem_item->addChild($options[0], $vI, 'http://purl.org/dc/elements/1.1/');
-				}
-				else {
-					$elem_item->addChild($options[0], $vI);
-				}
-			}
-		}
 
-		return $xml;
+		return RssBuilder::create($this->rssVersion, $this->encoding)->with('channel', $this->channel)->with('items', $items);
 	}
 
+	/**
+	 * Save the rss into file.
+	 * @param $filename
+	 * @return int The number of bytes written or false if an error occurred.
+	 * @throws \Exception
+	 */
 	public function save($filename)
 	{
-		return $this->render()->asXML($filename);
+		return RssBuilder::create($this->rssVersion, $this->encoding)->with('channel', $this->channel)->with('items', $this->items)->save($filename);
 	}
 
-	public function __toString()
-	{
-		return $this->render()->asXML();
-	}
 }

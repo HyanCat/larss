@@ -5,19 +5,15 @@ RSS builder for Laravel 5
 
 1. Pull down the package with composer:
 
-	composer require hyancat/larss
+		composer require hyancat/larss
 
 2. Add the service provider to your providers array in `app/config/app.php` file.
 
-```php
-'Hyancat\Larss\LarssServiceProvider'
-```
+		'Hyancat\Larss\LarssServiceProvider'
 
 3. At last, add the alias to the alias array in `app/config/app.php` file.
 
-```php
-'RSS'		=> 'Hyancat\Larss\LarssFacade',
-```
+		'RSS'		=> 'Hyancat\Larss\LarssFacade',
 
 ## Usage
 
@@ -29,6 +25,7 @@ $rss = \RSS::make()->channel([
 	'link'        => 'http://www.xxx.yyy',
 	// ......
 ]);
+
 foreach ($posts as $post) {
 	$rss->item([
 		'title'             => $post->title,

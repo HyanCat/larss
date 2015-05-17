@@ -34,14 +34,13 @@ class Larss
 
 	public function caching($duration, $key = 'laravel-larss')
 	{
-		if (! is_int($duration) || $duration < 0)
-			return false;
-
 		$this->cacheKey      = $key;
 		$this->cacheDuration = $duration;
 
-		if ($this->cacheDuration < 1 && $this->isCached()) {
-			Cache::forget($this->cacheKey);
+		if (! $this->shouldCache()) {
+			if ($this->isCached()) {
+				Cache::forget($this->cacheKey);
+			}
 
 			return false;
 		}
@@ -106,17 +105,20 @@ class Larss
 		$this->cacheDuration = $cacheDuration ?: $this->cacheDuration;
 		$this->cacheKey      = $cacheKey ?: $this->cacheKey;
 
-		if ($this->cacheDuration > 0 && Cache::has($this->cacheKey)) {
+		// get data from cache.
+		if ($this->shouldCache() && $this->isCached()) {
 			$value = Cache::get($this->cacheKey);
 
 			return $value;
 		}
 
-
+		// build rss data.
 		$items = $this->limit > 0 ? array_slice($this->items, 0, $this->limit) : $this->items;
 
 		$rss = RssBuilder::create($this->rssVersion, $this->encoding)->with('channel', $this->channel)->with('items', $items);;
-		Cache::put($this->cacheKey, strval($rss), $this->cacheDuration);
+		if ($this->shouldCache()) {
+			Cache::put($this->cacheKey, strval($rss), $this->cacheDuration);
+		}
 
 		return $rss;
 	}
@@ -130,6 +132,11 @@ class Larss
 	public function save($filename)
 	{
 		return RssBuilder::create($this->rssVersion, $this->encoding)->with('channel', $this->channel)->with('items', $this->items)->save($filename);
+	}
+
+	protected function shouldCache()
+	{
+		return is_int($this->cacheDuration) && $this->cacheDuration > 0;
 	}
 
 	protected function isCached()

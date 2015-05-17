@@ -17,8 +17,44 @@ RSS builder for Laravel 5
 
 ## Usage
 
+### Usage with Cache:
+
 ```php
 
+$rss = \RSS::make();
+if (! $rss->caching(10)) {
+
+	// make channel.
+	$rss->channel([
+		'title'       => 'title',
+		'description' => 'description',
+		'link'        => 'http://www.xxx.yyy',
+	]);
+
+	// gen posts data ......
+	foreach ($posts as $post) {
+		$rss->item([
+			'title'             => $post->title,
+			'description|cdata' => $post->body,
+			'link'              => $post->url,
+			// ......
+		]);
+	}
+}
+
+// If you want to save the rss data to file.
+$rss->save('rss.xml');
+
+// Or just make a response to the http request.
+return \Response::make($rss->render(), 200, ['Content-Type' => 'text/xml']);
+
+```
+
+### Usage without Cache:
+
+```php
+
+// make with channel.
 $rss = \RSS::make()->channel([
 	'title'       => 'title',
 	'description' => 'description',
@@ -26,6 +62,7 @@ $rss = \RSS::make()->channel([
 	// ......
 ]);
 
+// gen posts data ......
 foreach ($posts as $post) {
 	$rss->item([
 		'title'             => $post->title,
@@ -35,10 +72,6 @@ foreach ($posts as $post) {
 	]);
 }
 
-// If you want to save the rss data to file.
-$rss->save('rss.xml');
-
-// Or just make a response to the http request.
-return \Response::make($rss->render(), 200, ['Content-Type' => 'text/xml']);
+return ...;
 
 ```

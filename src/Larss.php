@@ -3,10 +3,15 @@
 namespace Hyancat\Larss;
 
 
+use Illuminate\Support\Facades\Cache;
+
 class Larss
 {
 	protected $rssVersion = '2.0';
 	protected $encoding = 'UTF-8';
+
+	protected $cacheDuration = 0;
+	protected $cacheKey;
 
 	protected $channel = [];
 	protected $items = [];
@@ -25,6 +30,23 @@ class Larss
 		$this->encoding   = $encoding;
 
 		return $this;
+	}
+
+	public function caching($duration, $key = 'laravel-larss')
+	{
+		if (! is_int($duration) || $duration < 0)
+			return false;
+
+		$this->cacheKey      = $key;
+		$this->cacheDuration = $duration;
+
+		if ($this->cacheDuration < 1 && $this->isCached()) {
+			Cache::forget($this->cacheKey);
+
+			return false;
+		}
+
+		return $this->isCached();
 	}
 
 	/**
@@ -74,14 +96,29 @@ class Larss
 
 	/**
 	 * render for page.
+	 * @param $cacheDuration
+	 * @param $cacheKey
 	 * @return $this
 	 * @throws \Exception
 	 */
-	public function render()
+	public function render($cacheDuration = null, $cacheKey = null)
 	{
+		$this->cacheDuration = $cacheDuration ?: $this->cacheDuration;
+		$this->cacheKey      = $cacheKey ?: $this->cacheKey;
+
+		if ($this->cacheDuration > 0 && Cache::has($this->cacheKey)) {
+			$value = Cache::get($this->cacheKey);
+
+			return $value;
+		}
+
+
 		$items = $this->limit > 0 ? array_slice($this->items, 0, $this->limit) : $this->items;
 
-		return RssBuilder::create($this->rssVersion, $this->encoding)->with('channel', $this->channel)->with('items', $items);
+		$rss = RssBuilder::create($this->rssVersion, $this->encoding)->with('channel', $this->channel)->with('items', $items);;
+		Cache::put($this->cacheKey, strval($rss), $this->cacheDuration);
+
+		return $rss;
 	}
 
 	/**
@@ -95,4 +132,8 @@ class Larss
 		return RssBuilder::create($this->rssVersion, $this->encoding)->with('channel', $this->channel)->with('items', $this->items)->save($filename);
 	}
 
+	protected function isCached()
+	{
+		return Cache::has($this->cacheKey);
+	}
 }

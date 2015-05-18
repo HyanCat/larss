@@ -29,6 +29,10 @@ if (! $rss->caching(10)) {
 		'title'       => 'title',
 		'description' => 'description',
 		'link'        => 'http://www.xxx.yyy',
+	])->withImage([
+		'url'   => 'http://www.xxx.yyy/logo.png',
+	  	'title' => 'title',
+	  	'link'  => 'http://www.xxx.yyy',
 	]);
 
 	// gen posts data ......
@@ -60,6 +64,10 @@ $rss = \RSS::make()->channel([
 	'description' => 'description',
 	'link'        => 'http://www.xxx.yyy',
 	// ......
+])->withImage([
+	'url'   => 'http://www.xxx.yyy/logo.png',
+	'title' => 'title',
+	'link'  => 'http://www.xxx.yyy',
 ]);
 
 // gen posts data ......

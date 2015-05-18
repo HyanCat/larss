@@ -65,6 +65,13 @@ class Larss
 		return $this;
 	}
 
+	public function withImage($image)
+	{
+		$this->channel['image'] = $image;
+
+		return $this;
+	}
+
 	/**
 	 * @param $properties
 	 *        --optional: [title | link | description | author | category | comments | enclosure | guid | pubDate | source]

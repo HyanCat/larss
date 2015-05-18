@@ -127,8 +127,21 @@ class RssBuilder
 	protected function buildChannel($channel)
 	{
 		$channelNode = $this->document->createElement('channel');
+
 		foreach ($channel as $channelName => $channelValue) {
-			$channelPropertyNode = new \DOMElement($channelName, $channelValue);
+			if (is_string($channelValue)) {
+				$channelPropertyNode = new \DOMElement($channelName, $channelValue);
+			}
+			elseif (is_array($channelValue)) {
+				$channelPropertyNode = $channelNode->ownerDocument->createElement($channelName);
+				foreach ($channelValue as $subKey => $subValue) {
+					$subNode = new \DOMElement($subKey, $subValue);
+					$channelPropertyNode->appendChild($subNode);
+				}
+			}
+			else {
+				continue;
+			}
 			$channelNode->appendChild($channelPropertyNode);
 		}
 
